@@ -1,4 +1,5 @@
 ---
+import { Image } from "astro:assets";
 import HeaderLink from "../components/HeaderLink.astro";
 import Layout from "../layouts/BlogPost.astro";
 ---
@@ -9,6 +10,35 @@ import Layout from "../layouts/BlogPost.astro";
     <HeaderLink href="https://kanolab.net/">狩野芳伸研究室</HeaderLink
     >に所属し、主に自然言語処理を研究しています。<br />
   </p>
+  <h2>Tech Stack</h2>
+  <div class="tech-stacks">
+    {
+      (() => {
+        return [
+          "cs",
+          "cloudflare",
+          "dart",
+          "docker",
+          "dotnet",
+          "flutter",
+          "go",
+          "java",
+          "nextjs",
+          "py",
+          "selenium",
+          "svelte",
+        ].map((stack) => (
+          <Image
+            src={`https://skillicons.dev/icons?i=${stack}`}
+            alt={stack}
+            width={48}
+            height={48}
+            loading="eager"
+          />
+        ));
+      })()
+    }
+  </div>
   <h2>Projects</h2>
   <ul>
     <li>
@@ -50,3 +80,17 @@ import Layout from "../layouts/BlogPost.astro";
     </li>
   </ul>
 </Layout>
+
+<style>
+  .tech-stacks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-block-start: 1em;
+    margin-block-end: 1em;
+  }
+  .tech-stacks img {
+    width: 3rem;
+    height: 3rem;
+  }
+</style>
