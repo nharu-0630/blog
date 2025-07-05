@@ -1,4 +1,5 @@
 ---
+
 ---
 
 <canvas id="particle-canvas"></canvas>
@@ -17,23 +18,22 @@
   }
 </style>
 
-
 <script>
   class LowFiParticleSystem {
     constructor() {
-      this.canvas = document.getElementById('particle-canvas');
-      this.ctx = this.canvas.getContext('2d');
+      this.canvas = document.getElementById("particle-canvas");
+      this.ctx = this.canvas.getContext("2d");
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.isMouseDown = false;
       this.isRightClick = false;
-      
+
       // Hardcoded settings
       this.particleCount = 70;
       this.speed = 1;
       this.chromatic = 1;
       this.pixelation = 1;
-      
+
       this.lowResCanvas = null;
       this.lowResCtx = null;
       this.redCanvas = null;
@@ -42,68 +42,71 @@
       this.redCtx = null;
       this.greenCtx = null;
       this.blueCtx = null;
-      
+
       this.init();
       this.setupEventListeners();
       this.animate();
     }
-    
+
     init() {
       this.resize();
       this.createLowResBuffer();
       this.createColorChannels();
       this.createParticles();
     }
-    
+
     resize() {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.width = this.canvas.width;
       this.height = this.canvas.height;
-      
+
       if (this.width > 0 && this.height > 0) {
         this.createLowResBuffer();
         this.createColorChannels();
       }
     }
-    
+
     createLowResBuffer() {
       this.lowResWidth = Math.max(1, Math.floor(this.width / this.pixelation));
-      this.lowResHeight = Math.max(1, Math.floor(this.height / this.pixelation));
-      
-      this.lowResCanvas = document.createElement('canvas');
+      this.lowResHeight = Math.max(
+        1,
+        Math.floor(this.height / this.pixelation)
+      );
+
+      this.lowResCanvas = document.createElement("canvas");
       this.lowResCanvas.width = this.lowResWidth;
       this.lowResCanvas.height = this.lowResHeight;
-      this.lowResCtx = this.lowResCanvas.getContext('2d');
-      
+      this.lowResCtx = this.lowResCanvas.getContext("2d");
+
       this.lowResCtx.imageSmoothingEnabled = false;
       this.ctx.imageSmoothingEnabled = false;
     }
-    
+
     createColorChannels() {
-      this.redCanvas = document.createElement('canvas');
-      this.greenCanvas = document.createElement('canvas');
-      this.blueCanvas = document.createElement('canvas');
-      
+      this.redCanvas = document.createElement("canvas");
+      this.greenCanvas = document.createElement("canvas");
+      this.blueCanvas = document.createElement("canvas");
+
       this.redCanvas.width = this.lowResWidth;
       this.redCanvas.height = this.lowResHeight;
       this.greenCanvas.width = this.lowResWidth;
       this.greenCanvas.height = this.lowResHeight;
       this.blueCanvas.width = this.lowResWidth;
       this.blueCanvas.height = this.lowResHeight;
-      
-      this.redCtx = this.redCanvas.getContext('2d');
-      this.greenCtx = this.greenCanvas.getContext('2d');
-      this.blueCtx = this.blueCanvas.getContext('2d');
-      
+
+      this.redCtx = this.redCanvas.getContext("2d");
+      this.greenCtx = this.greenCanvas.getContext("2d");
+      this.blueCtx = this.blueCanvas.getContext("2d");
+
       this.redCtx.imageSmoothingEnabled = false;
       this.greenCtx.imageSmoothingEnabled = false;
       this.blueCtx.imageSmoothingEnabled = false;
     }
-    
+
     createParticles() {
       this.particles = [];
-      
+
       for (let i = 0; i < this.particleCount; i++) {
         this.particles.push({
           x: Math.random() * this.lowResWidth,
@@ -113,23 +116,23 @@
           size: 4,
           hue: Math.random() * 360,
           life: 1,
-          maxLife: Math.random() * 100 + 50
+          maxLife: Math.random() * 100 + 50,
         });
       }
     }
-    
+
     updateParticles() {
       const mouseX = this.mouse.x / this.pixelation;
       const mouseY = this.mouse.y / this.pixelation;
-      
-      this.particles.forEach(particle => {
+
+      this.particles.forEach((particle) => {
         const dx = mouseX - particle.x;
         const dy = mouseY - particle.y;
         const distSq = dx * dx + dy * dy;
-        
+
         if (distSq < 1600) {
           const dist = Math.sqrt(distSq);
-          
+
           if (this.isRightClick) {
             const force = 20 / (dist + 1);
             particle.vx += dx * force * 0.01;
@@ -144,19 +147,21 @@
             particle.vy -= dy * force * 0.005;
           }
         }
-        
-        const speed = Math.sqrt(particle.vx * particle.vx + particle.vy * particle.vy);
+
+        const speed = Math.sqrt(
+          particle.vx * particle.vx + particle.vy * particle.vy
+        );
         if (speed > 5) {
           particle.vx = (particle.vx / speed) * 5;
           particle.vy = (particle.vy / speed) * 5;
         }
-        
+
         particle.vx *= 0.98;
         particle.vy *= 0.98;
-        
+
         particle.x += particle.vx * this.speed;
         particle.y += particle.vy * this.speed;
-        
+
         if (particle.x < 0 || particle.x > this.lowResWidth) {
           particle.vx *= -0.8;
           particle.x = Math.max(0, Math.min(this.lowResWidth, particle.x));
@@ -165,7 +170,7 @@
           particle.vy *= -0.8;
           particle.y = Math.max(0, Math.min(this.lowResHeight, particle.y));
         }
-        
+
         particle.life--;
         if (particle.life <= 0) {
           particle.x = Math.random() * this.lowResWidth;
@@ -177,133 +182,142 @@
         }
       });
     }
-    
+
     drawParticles() {
-      this.lowResCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      this.lowResCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
       this.lowResCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
-      
-      this.redCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+
+      this.redCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
       this.redCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
-      
-      this.greenCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+
+      this.greenCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
       this.greenCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
-      
-      this.blueCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+
+      this.blueCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
       this.blueCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
-      
-      this.particles.forEach(particle => {
-        const alpha = particle.life / particle.maxLife;
+
+      this.particles.forEach((particle) => {
+        const alpha = (particle.life * 0.3) / particle.maxLife;
         const brightness = Math.min(100, 50 + alpha * 50);
-        
+
         const x = Math.floor(particle.x);
         const y = Math.floor(particle.y);
         const size = Math.max(1, Math.floor(particle.size));
-        
+
         const hsl = this.hslToRgb(particle.hue / 360, 1, brightness / 100);
-        
+
         this.redCtx.fillStyle = `rgba(${hsl.r}, 0, 0, ${alpha})`;
         this.redCtx.fillRect(x, y, size, size);
-        
+
         this.greenCtx.fillStyle = `rgba(0, ${hsl.g}, 0, ${alpha})`;
         this.greenCtx.fillRect(x, y, size, size);
-        
+
         this.blueCtx.fillStyle = `rgba(0, 0, ${hsl.b}, ${alpha})`;
         this.blueCtx.fillRect(x, y, size, size);
       });
     }
-    
+
     hslToRgb(h, s, l) {
       let r, g, b;
-      
+
       if (s === 0) {
         r = g = b = l;
       } else {
         const hue2rgb = (p, q, t) => {
           if (t < 0) t += 1;
           if (t > 1) t -= 1;
-          if (t < 1/6) return p + (q - p) * 6 * t;
-          if (t < 1/2) return q;
-          if (t < 2/3) return p + (q - p) * (2/3 - t) * 6;
+          if (t < 1 / 6) return p + (q - p) * 6 * t;
+          if (t < 1 / 2) return q;
+          if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
           return p;
         };
-        
+
         const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
         const p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
+        r = hue2rgb(p, q, h + 1 / 3);
         g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
+        b = hue2rgb(p, q, h - 1 / 3);
       }
-      
+
       return {
         r: Math.round(r * 255),
         g: Math.round(g * 255),
-        b: Math.round(b * 255)
+        b: Math.round(b * 255),
       };
     }
-    
+
     applyChromaticAberration() {
-      if (!this.redCanvas || !this.greenCanvas || !this.blueCanvas || 
-          this.redCanvas.width === 0 || this.redCanvas.height === 0) {
+      if (
+        !this.redCanvas ||
+        !this.greenCanvas ||
+        !this.blueCanvas ||
+        this.redCanvas.width === 0 ||
+        this.redCanvas.height === 0
+      ) {
         return;
       }
-      
+
       const bgGradient = this.ctx.createRadialGradient(
-        this.width / 2, this.height / 2, 0,
-        this.width / 2, this.height / 2, Math.max(this.width, this.height) / 2
+        this.width / 2,
+        this.height / 2,
+        0,
+        this.width / 2,
+        this.height / 2,
+        Math.max(this.width, this.height) / 2
       );
-      bgGradient.addColorStop(0, '#1a1a3e');
-      bgGradient.addColorStop(0.3, '#0f0f2a');
-      bgGradient.addColorStop(0.7, '#000');
-      bgGradient.addColorStop(1, '#000');
-      
+      bgGradient.addColorStop(0, "#1a1a3e");
+      bgGradient.addColorStop(0.3, "#0f0f2a");
+      bgGradient.addColorStop(0.7, "#000");
+      bgGradient.addColorStop(1, "#000");
+
       this.ctx.fillStyle = bgGradient;
       this.ctx.fillRect(0, 0, this.width, this.height);
-      
+
       const offset = this.chromatic;
-      
-      this.ctx.globalCompositeOperation = 'lighten';
-      
+
+      this.ctx.globalCompositeOperation = "lighten";
+
       // Red channel - offset to top-left
       this.ctx.drawImage(
         this.redCanvas,
-        -offset, -offset,
-        this.width, this.height
+        -offset,
+        -offset,
+        this.width,
+        this.height
       );
-      
+
       // Green channel - offset to bottom-left
       this.ctx.drawImage(
         this.greenCanvas,
-        -offset * 0.5, offset * 0.5,
-        this.width, this.height
+        -offset * 0.5,
+        offset * 0.5,
+        this.width,
+        this.height
       );
-      
+
       // Blue channel - offset to right
-      this.ctx.drawImage(
-        this.blueCanvas,
-        offset, 0,
-        this.width, this.height
-      );
-      
-      this.ctx.globalCompositeOperation = 'multiply';
+      this.ctx.drawImage(this.blueCanvas, offset, 0, this.width, this.height);
+
+      this.ctx.globalCompositeOperation = "multiply";
       this.ctx.globalAlpha = 0.95;
-      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+      this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
       for (let i = 0; i < this.height; i += 4) {
         this.ctx.fillRect(0, i, this.width, 2);
       }
-      
-      this.ctx.globalCompositeOperation = 'source-over';
+
+      this.ctx.globalCompositeOperation = "source-over";
       this.ctx.globalAlpha = 1;
     }
-    
+
     explode(x, y) {
       const lowX = x / this.pixelation;
       const lowY = y / this.pixelation;
-      
-      this.particles.forEach(particle => {
+
+      this.particles.forEach((particle) => {
         const dx = lowX - particle.x;
         const dy = lowY - particle.y;
         const distSq = dx * dx + dy * dy;
-        
+
         if (distSq < 2500) {
           const dist = Math.sqrt(distSq);
           const force = (50 - dist) * 0.3;
@@ -313,14 +327,14 @@
         }
       });
     }
-    
+
     setupEventListeners() {
-      document.addEventListener('mousemove', (e) => {
+      document.addEventListener("mousemove", (e) => {
         this.mouse.x = e.clientX;
         this.mouse.y = e.clientY;
       });
-      
-      document.addEventListener('mousedown', (e) => {
+
+      document.addEventListener("mousedown", (e) => {
         if (e.button === 0) {
           this.isMouseDown = true;
           this.explode(e.clientX, e.clientY);
@@ -328,24 +342,28 @@
           this.isRightClick = true;
         }
       });
-      
-      document.addEventListener('mouseup', () => {
+
+      document.addEventListener("mouseup", () => {
         this.isMouseDown = false;
         this.isRightClick = false;
       });
-      
-      document.addEventListener('contextmenu', (e) => {
+
+      document.addEventListener("contextmenu", (e) => {
         e.preventDefault();
       });
-      
-      window.addEventListener('resize', () => {
+
+      window.addEventListener("resize", () => {
         this.resize();
       });
     }
-    
-    
+
     animate() {
-      if (this.width > 0 && this.height > 0 && this.lowResWidth > 0 && this.lowResHeight > 0) {
+      if (
+        this.width > 0 &&
+        this.height > 0 &&
+        this.lowResWidth > 0 &&
+        this.lowResHeight > 0
+      ) {
         this.updateParticles();
         this.drawParticles();
         this.applyChromaticAberration();
@@ -353,6 +371,6 @@
       requestAnimationFrame(() => this.animate());
     }
   }
-  
+
   new LowFiParticleSystem();
 </script>

@@ -1,14 +1,52 @@
 ---
-import Layout from '../layouts/BlogPost.astro';
+import HeaderLink from "../components/HeaderLink.astro";
+import Layout from "../layouts/BlogPost.astro";
 ---
 
-<Layout
-	title="About Me"
-	description="Lorem ipsum dolor sit amet"
-	pubDate={new Date('July 05 2025')}
->
-	<p>
-		静岡大学 総合科学技術研究科 情報学専攻の修士1年生です。<br />
-		狩野芳伸研究室に所属し、主に自然言語処理を研究しています。<br />
-	</p>
+<Layout title="About Me" description="" pubDate={new Date("July 05 2025")}>
+  <p>
+    静岡大学 総合科学技術研究科 情報学専攻の修士1年の佐橋優人です。<br />
+    <HeaderLink href="https://kanolab.net/">狩野芳伸研究室</HeaderLink
+    >に所属し、主に自然言語処理を研究しています。<br />
+  </p>
+  <h2>Projects</h2>
+  <ul>
+    <li>
+      <a href="https://aiwolfdial.github.io/aiwolf-nlp-viewer"
+        >人狼知能プロジェクト</a
+      ><br />
+      参加者のプログラム同士で人狼ゲームを対戦する大会プロジェクト
+    </li>
+    <li>
+      <a href="https://github.com/nharu-0630/kanolab-vanguard"
+        >不正行為検知拡張機能</a
+      ><br />
+      編集中のファイルとブラウザの監視により、生成AIを用いた不正行為を検知するVS
+      Codeの拡張機能
+    </li>
+    <li>
+      <a href="https://github.com/nharu-0630/GakujoGUI-WPF"
+        >学務情報システムアプリ</a
+      ><br />
+      大学の学務情報システムに自動ログイン・スクレイピング処理をバックグラウンドで定期的に実行するアプリ
+    </li>
+  </ul>
+  <h2>Publications</h2>
+  <ul>
+    <li>
+      <a
+        href="https://www.anlp.jp/proceedings/annual_meeting/2025/pdf_dir/P9-9.pdf"
+        >ソーシャルメディアにおける投稿およびユーザの政治的傾向予測と政治的投稿フィルタによる性能向上</a
+      ><br />
+      佐橋 優人, 狩野 芳伸 (静大)
+    </li>
+    <li>
+      <a
+        href="https://www.anlp.jp/proceedings/annual_meeting/2024/pdf_dir/P2-2.pdf"
+        >STaMP:個人の性格や政治的立場等の多面的特性と紐づくSNSデータの構築及び文章スタイルによる個人特性予測</a
+      ><br />
+      福畠汐音, 仲田明良, 佐橋優人, 増川哲太 (静大), 三輪洋文, 野中尚人 (学習院大),
+      木下翔太郎, 岸本泰士郎 (慶應大), 五十嵐彰 (阪大), 岡久太郎, 狩野芳伸 (静大)
+    </li>
+  </ul>
 </Layout>
