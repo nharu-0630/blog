@@ -28,7 +28,11 @@
       this.isMouseDown = false;
       this.isRightClick = false;
 
-      // Hardcoded settings
+      this.targetFPS = 60;
+      this.frameInterval = 1000 / this.targetFPS;
+      this.lastTime = 0;
+      this.deltaTime = 0;
+
       this.particleCount = 70;
       this.speed = 1;
       this.chromatic = 1;
@@ -45,7 +49,7 @@
 
       this.init();
       this.setupEventListeners();
-      this.animate();
+      this.animate(0);
     }
 
     init() {
@@ -121,9 +125,11 @@
       }
     }
 
-    updateParticles() {
+    updateParticles(deltaTime) {
       const mouseX = this.mouse.x / this.pixelation;
       const mouseY = this.mouse.y / this.pixelation;
+
+      const normalizedDelta = deltaTime / (1000 / 60);
 
       this.particles.forEach((particle) => {
         const dx = mouseX - particle.x;
@@ -135,16 +141,16 @@
 
           if (this.isRightClick) {
             const force = 20 / (dist + 1);
-            particle.vx += dx * force * 0.01;
-            particle.vy += dy * force * 0.01;
+            particle.vx += dx * force * 0.01 * normalizedDelta;
+            particle.vy += dy * force * 0.01 * normalizedDelta;
           } else if (this.isMouseDown) {
             const force = 100 / (dist + 1);
-            particle.vx -= dx * force * 0.01;
-            particle.vy -= dy * force * 0.01;
+            particle.vx -= dx * force * 0.01 * normalizedDelta;
+            particle.vy -= dy * force * 0.01 * normalizedDelta;
           } else {
             const force = 30 / (dist + 1);
-            particle.vx -= dx * force * 0.005;
-            particle.vy -= dy * force * 0.005;
+            particle.vx -= dx * force * 0.005 * normalizedDelta;
+            particle.vy -= dy * force * 0.005 * normalizedDelta;
           }
         }
 
@@ -156,11 +162,11 @@
           particle.vy = (particle.vy / speed) * 5;
         }
 
-        particle.vx *= 0.98;
-        particle.vy *= 0.98;
+        particle.vx *= Math.pow(0.98, normalizedDelta);
+        particle.vy *= Math.pow(0.98, normalizedDelta);
 
-        particle.x += particle.vx * this.speed;
-        particle.y += particle.vy * this.speed;
+        particle.x += particle.vx * this.speed * normalizedDelta;
+        particle.y += particle.vy * this.speed * normalizedDelta;
 
         if (particle.x < 0 || particle.x > this.lowResWidth) {
           particle.vx *= -0.8;
@@ -171,7 +177,7 @@
           particle.y = Math.max(0, Math.min(this.lowResHeight, particle.y));
         }
 
-        particle.life--;
+        particle.life -= normalizedDelta;
         if (particle.life <= 0) {
           particle.x = Math.random() * this.lowResWidth;
           particle.y = Math.random() * this.lowResHeight;
@@ -277,7 +283,6 @@
 
       this.ctx.globalCompositeOperation = "lighten";
 
-      // Red channel - offset to top-left
       this.ctx.drawImage(
         this.redCanvas,
         -offset,
@@ -286,7 +291,6 @@
         this.height
       );
 
-      // Green channel - offset to bottom-left
       this.ctx.drawImage(
         this.greenCanvas,
         -offset * 0.5,
@@ -295,7 +299,6 @@
         this.height
       );
 
-      // Blue channel - offset to right
       this.ctx.drawImage(this.blueCanvas, offset, 0, this.width, this.height);
 
       this.ctx.globalCompositeOperation = "multiply";
@@ -357,18 +360,26 @@
       });
     }
 
-    animate() {
-      if (
-        this.width > 0 &&
-        this.height > 0 &&
-        this.lowResWidth > 0 &&
-        this.lowResHeight > 0
-      ) {
-        this.updateParticles();
-        this.drawParticles();
-        this.applyChromaticAberration();
+    animate(currentTime) {
+      const elapsed = currentTime - this.lastTime;
+
+      if (elapsed >= this.frameInterval) {
+        this.deltaTime = elapsed;
+        this.lastTime = currentTime - (elapsed % this.frameInterval);
+
+        if (
+          this.width > 0 &&
+          this.height > 0 &&
+          this.lowResWidth > 0 &&
+          this.lowResHeight > 0
+        ) {
+          this.updateParticles(this.deltaTime);
+          this.drawParticles();
+          this.applyChromaticAberration();
+        }
       }
-      requestAnimationFrame(() => this.animate());
+
+      requestAnimationFrame((time) => this.animate(time));
     }
   }
 
