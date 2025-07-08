@@ -20,26 +20,106 @@
 
 <script>
   class LowFiParticleSystem {
+    static readonly DEFAULT_PARTICLE_COUNT = 70;
+    static readonly DEFAULT_SPEED = 1;
+    static readonly DEFAULT_CHROMATIC = 1;
+    static readonly DEFAULT_PIXELATION = 1;
+    static readonly TARGET_FPS = 60;
+    static readonly MOUSE_INTERACTION_RADIUS = 1600;
+    static readonly EXPLOSION_RADIUS = 2500;
+    static readonly VELOCITY_LIMIT = 8;
+    static readonly FRICTION = 0.98;
+    static readonly BOUNCE_DAMPING = 0.8;
+    static readonly SCROLL_DAMPING = 0.95;
+    static readonly FADE_ALPHA = 0.1;
+    static readonly PARTICLE_SIZE = 4;
+    static readonly PARTICLE_MIN_LIFE = 50;
+    static readonly PARTICLE_MAX_LIFE = 150;
+    static readonly SCANLINE_INTERVAL = 4;
+    static readonly SCANLINE_HEIGHT = 2;
+    static readonly MULTIPLY_ALPHA = 0.95;
+
+    private canvas: HTMLCanvasElement;
+    private ctx: CanvasRenderingContext2D;
+    private particles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      size: number;
+      hue: number;
+      life: number;
+      maxLife: number;
+    }>;
+    private mouse: { x: number; y: number };
+    private isMouseDown: boolean;
+    private isRightClick: boolean;
+    private frameInterval: number;
+    private lastTime: number;
+    private deltaTime: number;
+    private particleCount: number;
+    private speed: number;
+    private chromatic: number;
+    private pixelation: number;
+    private width: number;
+    private height: number;
+    private scrollY: number;
+    private lastScrollY: number;
+    private scrollVelocity: number;
+    private scrollAcceleration: { x: number; y: number };
+    private scrollDamping: number;
+    private lowResCanvas: HTMLCanvasElement | null;
+    private lowResCtx: CanvasRenderingContext2D | null;
+    private lowResWidth: number;
+    private lowResHeight: number;
+    private redCanvas: HTMLCanvasElement | null;
+    private greenCanvas: HTMLCanvasElement | null;
+    private blueCanvas: HTMLCanvasElement | null;
+    private redCtx: CanvasRenderingContext2D | null;
+    private greenCtx: CanvasRenderingContext2D | null;
+    private blueCtx: CanvasRenderingContext2D | null;
+
     constructor() {
-      this.canvas = document.getElementById("particle-canvas");
-      this.ctx = this.canvas.getContext("2d");
+      const canvas = document.getElementById(
+        "particle-canvas"
+      ) as HTMLCanvasElement;
+      if (!canvas) {
+        throw new Error("Canvas element not found");
+      }
+
+      this.canvas = canvas;
+      const ctx = this.canvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("2D context not available");
+      }
+      this.ctx = ctx;
+
       this.particles = [];
       this.mouse = { x: 0, y: 0 };
       this.isMouseDown = false;
       this.isRightClick = false;
 
-      this.targetFPS = 60;
-      this.frameInterval = 1000 / this.targetFPS;
+      this.frameInterval = 1000 / LowFiParticleSystem.TARGET_FPS;
       this.lastTime = 0;
       this.deltaTime = 0;
 
-      this.particleCount = 70;
-      this.speed = 1;
-      this.chromatic = 1;
-      this.pixelation = 1;
+      this.particleCount = LowFiParticleSystem.DEFAULT_PARTICLE_COUNT;
+      this.speed = LowFiParticleSystem.DEFAULT_SPEED;
+      this.chromatic = LowFiParticleSystem.DEFAULT_CHROMATIC;
+      this.pixelation = LowFiParticleSystem.DEFAULT_PIXELATION;
+
+      this.width = 0;
+      this.height = 0;
+      this.scrollY = 0;
+      this.lastScrollY = 0;
+      this.scrollVelocity = 0;
+      this.scrollAcceleration = { x: 0, y: 0 };
+      this.scrollDamping = LowFiParticleSystem.SCROLL_DAMPING;
 
       this.lowResCanvas = null;
       this.lowResCtx = null;
+      this.lowResWidth = 0;
+      this.lowResHeight = 0;
       this.redCanvas = null;
       this.greenCanvas = null;
       this.blueCanvas = null;
@@ -52,14 +132,14 @@
       this.animate(0);
     }
 
-    init() {
+    private init(): void {
       this.resize();
       this.createLowResBuffer();
       this.createColorChannels();
       this.createParticles();
     }
 
-    resize() {
+    private resize(): void {
       this.canvas.width = window.innerWidth;
       this.canvas.height = window.innerHeight;
       this.width = this.canvas.width;
@@ -71,7 +151,7 @@
       }
     }
 
-    createLowResBuffer() {
+    private createLowResBuffer(): void {
       this.lowResWidth = Math.max(1, Math.floor(this.width / this.pixelation));
       this.lowResHeight = Math.max(
         1,
@@ -81,13 +161,17 @@
       this.lowResCanvas = document.createElement("canvas");
       this.lowResCanvas.width = this.lowResWidth;
       this.lowResCanvas.height = this.lowResHeight;
-      this.lowResCtx = this.lowResCanvas.getContext("2d");
 
+      const ctx = this.lowResCanvas.getContext("2d");
+      if (!ctx) {
+        throw new Error("Low resolution context not available");
+      }
+      this.lowResCtx = ctx;
       this.lowResCtx.imageSmoothingEnabled = false;
       this.ctx.imageSmoothingEnabled = false;
     }
 
-    createColorChannels() {
+    private createColorChannels(): void {
       this.redCanvas = document.createElement("canvas");
       this.greenCanvas = document.createElement("canvas");
       this.blueCanvas = document.createElement("canvas");
@@ -99,16 +183,24 @@
       this.blueCanvas.width = this.lowResWidth;
       this.blueCanvas.height = this.lowResHeight;
 
-      this.redCtx = this.redCanvas.getContext("2d");
-      this.greenCtx = this.greenCanvas.getContext("2d");
-      this.blueCtx = this.blueCanvas.getContext("2d");
+      const redCtx = this.redCanvas.getContext("2d");
+      const greenCtx = this.greenCanvas.getContext("2d");
+      const blueCtx = this.blueCanvas.getContext("2d");
+
+      if (!redCtx || !greenCtx || !blueCtx) {
+        throw new Error("Color channel contexts not available");
+      }
+
+      this.redCtx = redCtx;
+      this.greenCtx = greenCtx;
+      this.blueCtx = blueCtx;
 
       this.redCtx.imageSmoothingEnabled = false;
       this.greenCtx.imageSmoothingEnabled = false;
       this.blueCtx.imageSmoothingEnabled = false;
     }
 
-    createParticles() {
+    private createParticles(): void {
       this.particles = [];
 
       for (let i = 0; i < this.particleCount; i++) {
@@ -117,26 +209,49 @@
           y: Math.random() * this.lowResHeight,
           vx: (Math.random() - 0.5) * 2,
           vy: (Math.random() - 0.5) * 2,
-          size: 4,
+          size: LowFiParticleSystem.PARTICLE_SIZE,
           hue: Math.random() * 360,
           life: 1,
-          maxLife: Math.random() * 100 + 50,
+          maxLife:
+            Math.random() * LowFiParticleSystem.PARTICLE_MAX_LIFE +
+            LowFiParticleSystem.PARTICLE_MIN_LIFE,
         });
       }
     }
 
-    updateParticles(deltaTime) {
+    private updateScrollEffect(): void {
+      const currentScrollY = window.scrollY || window.pageYOffset;
+      const scrollDelta = currentScrollY - this.lastScrollY;
+      this.scrollVelocity = scrollDelta;
+      this.lastScrollY = currentScrollY;
+
+      const scrollForce = Math.abs(this.scrollVelocity) * 0.5;
+      const scrollDirection = this.scrollVelocity > 0 ? -1 : 1;
+
+      this.scrollAcceleration.y = scrollDirection * scrollForce * 0.1;
+      this.scrollAcceleration.x = (Math.random() - 0.5) * scrollForce * 0.05;
+
+      this.scrollAcceleration.x *= this.scrollDamping;
+      this.scrollAcceleration.y *= this.scrollDamping;
+    }
+
+    private updateParticles(deltaTime: number): void {
+      this.updateScrollEffect();
+
       const mouseX = this.mouse.x / this.pixelation;
       const mouseY = this.mouse.y / this.pixelation;
-
-      const normalizedDelta = deltaTime / (1000 / 60);
+      const normalizedDelta =
+        deltaTime / (1000 / LowFiParticleSystem.TARGET_FPS);
 
       this.particles.forEach((particle) => {
+        particle.vx += this.scrollAcceleration.x * normalizedDelta;
+        particle.vy += this.scrollAcceleration.y * normalizedDelta;
+
         const dx = mouseX - particle.x;
         const dy = mouseY - particle.y;
         const distSq = dx * dx + dy * dy;
 
-        if (distSq < 1600) {
+        if (distSq < LowFiParticleSystem.MOUSE_INTERACTION_RADIUS) {
           const dist = Math.sqrt(distSq);
 
           if (this.isRightClick) {
@@ -157,23 +272,25 @@
         const speed = Math.sqrt(
           particle.vx * particle.vx + particle.vy * particle.vy
         );
-        if (speed > 5) {
-          particle.vx = (particle.vx / speed) * 5;
-          particle.vy = (particle.vy / speed) * 5;
+        if (speed > LowFiParticleSystem.VELOCITY_LIMIT) {
+          particle.vx =
+            (particle.vx / speed) * LowFiParticleSystem.VELOCITY_LIMIT;
+          particle.vy =
+            (particle.vy / speed) * LowFiParticleSystem.VELOCITY_LIMIT;
         }
 
-        particle.vx *= Math.pow(0.98, normalizedDelta);
-        particle.vy *= Math.pow(0.98, normalizedDelta);
+        particle.vx *= Math.pow(LowFiParticleSystem.FRICTION, normalizedDelta);
+        particle.vy *= Math.pow(LowFiParticleSystem.FRICTION, normalizedDelta);
 
         particle.x += particle.vx * this.speed * normalizedDelta;
         particle.y += particle.vy * this.speed * normalizedDelta;
 
         if (particle.x < 0 || particle.x > this.lowResWidth) {
-          particle.vx *= -0.8;
+          particle.vx *= -LowFiParticleSystem.BOUNCE_DAMPING;
           particle.x = Math.max(0, Math.min(this.lowResWidth, particle.x));
         }
         if (particle.y < 0 || particle.y > this.lowResHeight) {
-          particle.vy *= -0.8;
+          particle.vy *= -LowFiParticleSystem.BOUNCE_DAMPING;
           particle.y = Math.max(0, Math.min(this.lowResHeight, particle.y));
         }
 
@@ -186,20 +303,28 @@
           particle.hue = Math.random() * 360;
           particle.life = particle.maxLife;
         }
+
+        if (Math.abs(this.scrollVelocity) > 5) {
+          particle.hue =
+            (particle.hue + Math.abs(this.scrollVelocity) * 0.5) % 360;
+        }
       });
     }
 
-    drawParticles() {
-      this.lowResCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    private drawParticles(): void {
+      if (!this.lowResCtx || !this.redCtx || !this.greenCtx || !this.blueCtx)
+        return;
+
+      this.lowResCtx.fillStyle = `rgba(0, 0, 0, ${LowFiParticleSystem.FADE_ALPHA})`;
       this.lowResCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
 
-      this.redCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      this.redCtx.fillStyle = `rgba(0, 0, 0, ${LowFiParticleSystem.FADE_ALPHA})`;
       this.redCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
 
-      this.greenCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      this.greenCtx.fillStyle = `rgba(0, 0, 0, ${LowFiParticleSystem.FADE_ALPHA})`;
       this.greenCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
 
-      this.blueCtx.fillStyle = "rgba(0, 0, 0, 0.1)";
+      this.blueCtx.fillStyle = `rgba(0, 0, 0, ${LowFiParticleSystem.FADE_ALPHA})`;
       this.blueCtx.fillRect(0, 0, this.lowResWidth, this.lowResHeight);
 
       this.particles.forEach((particle) => {
@@ -212,6 +337,12 @@
 
         const hsl = this.hslToRgb(particle.hue / 360, 1, brightness / 100);
 
+        if (
+          this.redCtx === null ||
+          this.greenCtx === null ||
+          this.blueCtx === null
+        )
+          return;
         this.redCtx.fillStyle = `rgba(${hsl.r}, 0, 0, ${alpha})`;
         this.redCtx.fillRect(x, y, size, size);
 
@@ -223,13 +354,17 @@
       });
     }
 
-    hslToRgb(h, s, l) {
-      let r, g, b;
+    private hslToRgb(
+      h: number,
+      s: number,
+      l: number
+    ): { r: number; g: number; b: number } {
+      let r: number, g: number, b: number;
 
       if (s === 0) {
         r = g = b = l;
       } else {
-        const hue2rgb = (p, q, t) => {
+        const hue2rgb = (p: number, q: number, t: number): number => {
           if (t < 0) t += 1;
           if (t > 1) t -= 1;
           if (t < 1 / 6) return p + (q - p) * 6 * t;
@@ -252,7 +387,7 @@
       };
     }
 
-    applyChromaticAberration() {
+    private applyChromaticAberration(): void {
       if (
         !this.redCanvas ||
         !this.greenCanvas ||
@@ -279,7 +414,8 @@
       this.ctx.fillStyle = bgGradient;
       this.ctx.fillRect(0, 0, this.width, this.height);
 
-      const offset = this.chromatic;
+      const scrollIntensity = Math.min(Math.abs(this.scrollVelocity) * 0.2, 5);
+      const offset = this.chromatic + scrollIntensity;
 
       this.ctx.globalCompositeOperation = "lighten";
 
@@ -290,7 +426,6 @@
         this.width,
         this.height
       );
-
       this.ctx.drawImage(
         this.greenCanvas,
         -offset * 0.5,
@@ -298,21 +433,29 @@
         this.width,
         this.height
       );
-
       this.ctx.drawImage(this.blueCanvas, offset, 0, this.width, this.height);
 
       this.ctx.globalCompositeOperation = "multiply";
-      this.ctx.globalAlpha = 0.95;
-      this.ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
-      for (let i = 0; i < this.height; i += 4) {
-        this.ctx.fillRect(0, i, this.width, 2);
+      this.ctx.globalAlpha = LowFiParticleSystem.MULTIPLY_ALPHA;
+      this.ctx.fillStyle = `rgba(0, 0, 0, ${LowFiParticleSystem.FADE_ALPHA})`;
+      for (
+        let i = 0;
+        i < this.height;
+        i += LowFiParticleSystem.SCANLINE_INTERVAL
+      ) {
+        this.ctx.fillRect(
+          0,
+          i,
+          this.width,
+          LowFiParticleSystem.SCANLINE_HEIGHT
+        );
       }
 
       this.ctx.globalCompositeOperation = "source-over";
       this.ctx.globalAlpha = 1;
     }
 
-    explode(x, y) {
+    private explode(x: number, y: number): void {
       const lowX = x / this.pixelation;
       const lowY = y / this.pixelation;
 
@@ -321,7 +464,7 @@
         const dy = lowY - particle.y;
         const distSq = dx * dx + dy * dy;
 
-        if (distSq < 2500) {
+        if (distSq < LowFiParticleSystem.EXPLOSION_RADIUS) {
           const dist = Math.sqrt(distSq);
           const force = (50 - dist) * 0.3;
           particle.vx -= dx * force * 0.1;
@@ -331,7 +474,7 @@
       });
     }
 
-    setupEventListeners() {
+    private setupEventListeners(): void {
       document.addEventListener("mousemove", (e) => {
         this.mouse.x = e.clientX;
         this.mouse.y = e.clientY;
@@ -358,9 +501,11 @@
       window.addEventListener("resize", () => {
         this.resize();
       });
+
+      window.addEventListener("scroll", () => {}, { passive: true });
     }
 
-    animate(currentTime) {
+    private animate(currentTime: number): void {
       const elapsed = currentTime - this.lastTime;
 
       if (elapsed >= this.frameInterval) {
