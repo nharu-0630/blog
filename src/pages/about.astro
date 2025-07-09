@@ -13,6 +13,74 @@ import Layout from "../layouts/BlogPost.astro";
     </p>
   </section>
   <section>
+    <h2>Tech Stack</h2>
+    <div class="tech-stacks">
+      {
+        (() => {
+          const categories = {
+            Frontend: [
+              "typescript",
+              "react",
+              "nextjs",
+              "astro",
+              "svelte",
+              "vite",
+              "tailwindcss",
+              "shadcn",
+            ],
+            Backend: ["golang", "java", "ruby", "rails", "php"],
+            "AI/ML": [
+              "python",
+              "pytorch",
+              "plotly",
+              "scikitlearn",
+              "huggingface",
+              "langchain",
+              "chatgpt",
+            ],
+            Mobile: ["dart", "flutter"],
+            Database: ["postgresql", "supabase"],
+            "Cloud/Infrastructure": [
+              "aws",
+              "azure",
+              "gcp",
+              "cloudflare",
+              "docker",
+              "proxmox",
+            ],
+            "Tools/Others": [
+              "cs",
+              "graphql",
+              "websocket",
+              "postman",
+              "selenium",
+              "ngrok",
+              "tailscale",
+              "googleappsscript",
+              "hugo",
+            ],
+          };
+          return Object.entries(categories).map(([category, stacks]) => (
+            <div>
+              <h3>{category}</h3>
+              <div class="tech-stack-items">
+                {stacks.map((stack) => (
+                  <Image
+                    src={`/images/tech-stacks/${stack}.svg`}
+                    alt={stack}
+                    width={48}
+                    height={48}
+                    loading="lazy"
+                  />
+                ))}
+              </div>
+            </div>
+          ));
+        })()
+      }
+    </div>
+  </section>
+  <section>
     <h2>Projects</h2>
     <ul>
       <li>
@@ -57,77 +125,8 @@ import Layout from "../layouts/BlogPost.astro";
     </ul>
   </section>
   <section>
-    <h2>Tech Stack</h2>
-    <div class="tech-stacks">
-      {
-        (() => {
-          const categories = {
-            Frontend: [
-              "typescript",
-              "react",
-              "nextjs",
-              "astro",
-              "svelte",
-              "vite",
-              "tailwindcss",
-              "shadcn",
-            ],
-            Backend: ["golang", "java", "ruby", "rails", "php"],
-            "AI/ML": [
-              "python",
-              "tensorflow",
-              "pytorch",
-              "plotly",
-              "scikitlearn",
-              "huggingface",
-              "langchain",
-              "chatgpt",
-            ],
-            Mobile: ["dart", "flutter"],
-            Database: ["postgresql", "supabase"],
-            "Cloud/Infrastructure": [
-              "aws",
-              "azure",
-              "gcp",
-              "cloudflare",
-              "docker",
-              "proxmox",
-            ],
-            "Tools/Others": [
-              "cs",
-              "graphql",
-              "websocket",
-              "postman",
-              "selenium",
-              "ngrok",
-              "tailscale",
-              "googleappsscript",
-              "hugo",
-            ],
-          };
-          return Object.entries(categories).map(([category, stacks]) => (
-            <div>
-              <h3>{category}</h3>
-              <div class="tech-stack-items">
-                {stacks.map((stack) => (
-                  <Image
-                    src={`https://go-skill-icons.vercel.app/api/icons?i=${stack}&theme=dark`}
-                    alt={stack}
-                    width={48}
-                    height={48}
-                    loading="lazy"
-                  />
-                ))}
-              </div>
-            </div>
-          ));
-        })()
-      }
-    </div>
-  </section>
-  <section>
     <h2>Contact</h2>
-    <a href="mailto:root@nharu.dev"> Email </a><br />
+    <a href="mailto:root@nharu.dev">Email</a><br />
   </section>
 </Layout>
 
@@ -136,7 +135,6 @@ import Layout from "../layouts/BlogPost.astro";
     display: flex;
     flex-wrap: wrap;
     gap: 1rem 4rem;
-    margin-block-start: 1em;
     margin-block-end: 2em;
   }
 
