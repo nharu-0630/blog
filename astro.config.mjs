@@ -5,7 +5,7 @@ import { defineConfig } from 'astro/config';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://blog.nharu.dev',
+	site: 'https://nharu.dev',
 	output: 'static',
 	integrations: [mdx(), sitemap()],
 });
