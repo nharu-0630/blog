@@ -1,0 +1,37 @@
+---
+title: "学務情報システムアプリ"
+description: "大学の学務情報システムに自動ログイン・スクレイピング処理することで大学生活の利便性を向上するアプリ"
+pubDate: "Jul 11 2025"
+---
+
+import { Image } from "astro:assets";
+import image1 from "../../assets/blog/proj-gakujo-1.png";
+import image2 from "../../assets/blog/proj-gakujo-2.png";
+import image3 from "../../assets/blog/proj-gakujo-3.png";
+
+<Image src={image1} alt="アプリのホーム画面" />
+<Image src={image2} alt="アプリのホーム画面" />
+<Image src={image3} alt="アプリのレポート一覧画面" />
+
+個人開発\
+大学の学務情報システムの使い勝手が悪く、毎回ログインして情報を確認することが面倒であったため、自動ログイン・スクレイピング処理をしたうえで、ローカル内に保存することでオフライン環境でも閲覧することができるアプリを開発しました。
+
+## 利用技術
+
+C#, Flutter, Dart \
+WebView, Discord Webhook, Todoist API
+
+## 担当領域
+
+すべて
+
+## 工夫した点
+
+スクレイピング処理に Selenium による Web ブラウザの自動操作が候補に挙がりましたが、ブラウザのバイナリが肥大であること、サーバ側が低速であるため期待する速度が得られないこと、モバイルへの移行が不可能であることから、HTTP リクエストによるスクレイピングする方法を採用しました。SSO ログイン処理における JavaScript によるリダイレクトや二段階認証などの通信をすべて再現することでログインを実現しました。 \
+既存システムのブラウザの戻るボタンが使えないことや授業連絡の本文内検索ができないことなどの不便な点に解決するだけでなく、新着の連絡を Discord のチャンネルに転送する機能や課題の締切を ToDo アプリに追加する機能により、大学生活を効率化させることができました。 \
+開発過程の一環で大学の学務情報システムの脆弱性を発見し、IPA 脆弱性関連情報に届出し、受理され、修正されました。(IPA#87867362)
+
+## 関連ページ
+
+- C# (WPF) 版 [nharu-0630/GakujoGUI-WPF](https://github.com/nharu-0630/GakujoGUI-WPF)
+- Flutter 版 [nharu-0630/GakujoGUI-Flutter](https://github.com/nharu-0630/GakujoGUI-Flutter)
