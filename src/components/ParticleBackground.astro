@@ -20,10 +20,11 @@
 
 <script>
   class LowFiParticleSystem {
-    static readonly DEFAULT_PARTICLE_COUNT = 70;
+    static readonly DEFAULT_PARTICLE_COUNT = 33;
     static readonly DEFAULT_SPEED = 1;
     static readonly DEFAULT_CHROMATIC = 1;
     static readonly DEFAULT_PIXELATION = 1;
+    static readonly SATURATION_MULTIPLIER = 0.3;
     static readonly TARGET_FPS = 60;
     static readonly MOUSE_INTERACTION_RADIUS = 1600;
     static readonly EXPLOSION_RADIUS = 2500;
@@ -335,7 +336,11 @@
         const y = Math.floor(particle.y);
         const size = Math.max(1, Math.floor(particle.size));
 
-        const hsl = this.hslToRgb(particle.hue / 360, 1, brightness / 100);
+        const hsl = this.hslToRgb(
+          particle.hue / 360,
+          LowFiParticleSystem.SATURATION_MULTIPLIER,
+          brightness / 100
+        );
 
         if (
           this.redCtx === null ||
